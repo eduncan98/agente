@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Entornos
+.env
+.env.*
+# FAISS y embeddings
+faiss_tspec/
+*.faiss
+*.pkl
+
+# Dataset local
+TSpec-LLM/
+
+# IDEs
+.vscode/
+.idea/
+
+# Mac
+.DS_Store
