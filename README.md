@@ -49,30 +49,33 @@ OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ## 🧠 ¿Cómo se ejecuta?
 
 1. Coloca los archivos `.md` del dataset 3GPP en la ruta definida en `TSpec-LLM/3GPP-clean/Rel-15`.
-2. Ejecuta el script principal:
+2. Construye el índice:
 
 ```bash
-python rag_tspec_agent.py
+python build_faiss.py
 ```
 
-3. Espera a que se construya (o cargue) el índice FAISS.
+3. Ejecuta el agente:
+
+```bash
+python ask_agent.py
+```
+
 4. Interactúa con el agente por consola:
 
-```
-🧠> ¿Qué es el MME en LTE?
-📘 Respuesta:
-...
-```
 
 ---
 
-## 🛠 Estructura del script
+## 🛠 Estructura de los scripts
 
-- `cargar_documentos()` → Lee todos los archivos Markdown
-- `dividir_en_chunks()` → Divide el contenido en fragmentos de 1000 caracteres
-- `construir_faiss()` → Genera los embeddings y construye el índice FAISS
-- `crear_agente()` → Crea el `RetrievalQA` con el modelo `ChatOpenAI`
-- `hacer_pregunta()` → Interfaz conversacional por consola
+- **build_faiss.py**
+  - `cargar_documentos()` → Lee todos los archivos Markdown
+  - `dividir_en_chunks()` → Divide el contenido en fragmentos de 1000 caracteres
+  - `construir_faiss()` → Genera los embeddings y construye el índice FAISS
+- **ask_agent.py**
+  - `cargar_faiss()` → Carga el índice previamente guardado
+  - `crear_agente()` → Crea el `RetrievalQA` con el modelo `ChatOpenAI`
+  - `hacer_pregunta()` → Interfaz conversacional por consola
 
 ---
 
