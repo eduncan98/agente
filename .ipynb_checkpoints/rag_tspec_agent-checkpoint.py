@@ -80,29 +80,7 @@ def hacer_pregunta(chain):
         query = input("🧠> ").strip()
         if query.lower() == "salir":
             break
-
-        # Recuperar documentos relevantes
-        try:
-            docs = chain.retriever.invoke(query)
-        except AttributeError:
-            print("⚠️ El retriever no está expuesto correctamente en la cadena.")
-            return
-
-        print("\n🔎 Documentos recuperados por FAISS:\n")
-        try:
-            for i, doc in enumerate(list(docs)[:5]):
-                print(f"--- Documento {i+1} ---")
-                print(doc.page_content[:500])  # muestra los primeros 500 caracteres
-                print()
-        except Exception as e:
-            print(f"❌ Error mostrando documentos: {e}")
-
-        # Obtener respuesta
-        try:
-            respuesta = chain.invoke(query)  # en lugar de `.run(query)`
-        except Exception:
-            respuesta = chain.run(query)  # por compatibilidad si `.invoke()` falla
-
+        respuesta = chain.invoke({"query":query})["result"]
         print(f"\n📘 Respuesta:\n{respuesta}\n")
 
 # === MAIN ===
