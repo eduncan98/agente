@@ -6,6 +6,7 @@ from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 import os
 from dotenv import load_dotenv
+from tqdm import tqdm
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -43,7 +44,19 @@ def construir_faiss(chunks):
         }
     )
 
-    db = FAISS.from_documents(chunks, embeddings)
+    batch_size = 64
+    progress = tqdm(total=len(chunks), desc="Indexando", ncols=80)
+
+    first_batch = chunks[:batch_size]
+    db = FAISS.from_documents(first_batch, embeddings)
+    progress.update(len(first_batch))
+
+    for i in range(batch_size, len(chunks), batch_size):
+        batch = chunks[i:i + batch_size]
+        db.add_documents(batch)
+        progress.update(len(batch))
+
+    progress.close()
     db.save_local(INDEX_FAISS)
 
     print("✅ FAISS guardado.")
