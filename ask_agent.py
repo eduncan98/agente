@@ -1,9 +1,7 @@
-# ask_agent.py
-
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_openai import ChatOpenAI
-from langchain.chains import RetrievalQA
+from langchain.prompts import PromptTemplate
 import os
 import sys
 from dotenv import load_dotenv
@@ -15,61 +13,61 @@ INDEX_FAISS = "faiss_tspec"
 MODELO_EMBEDDINGS = "sentence-transformers/all-MiniLM-L6-v2"
 
 load_dotenv()
-
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if not OPENAI_API_KEY:
     print("❌ ERROR: No se encontró OPENAI_API_KEY en el archivo .env.")
     sys.exit(1)
 
-# === PASO 1: Cargar FAISS ===
 def cargar_faiss():
     print("📂 Cargando FAISS existente...")
     embeddings = HuggingFaceEmbeddings(model_name=MODELO_EMBEDDINGS)
     db = FAISS.load_local(INDEX_FAISS, embeddings, allow_dangerous_deserialization=True)
     return db
 
-# === PASO 2: Crear agente y responder ===
 def crear_agente(db):
     print("🤖 Inicializando agente...")
     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
     llm = ChatOpenAI(model_name="gpt-4", temperature=0)
-    retriever = db.as_retriever()
-    chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
-    return chain
+    retriever = db.as_retriever(search_kwargs={"k": 15})
+    return llm, retriever
 
+def hacer_pregunta(llm, retriever):
+    prompt_template = PromptTemplate.from_template(
+        """Use the following technical context to answer the question.
+Only respond with information found in the context.
+If the answer is not in the context, say "The answer is not available in the provided information."
 
-def hacer_pregunta(chain):
+Context:
+---------
+{context}
+
+Question:
+---------
+{question}
+
+Answer:"""
+    )
+
     print("\n💬 Agente listo. Escribe tu pregunta técnica (o 'salir'):")
     while True:
         query = input("🧠> ").strip()
         if query.lower() == "salir":
             break
 
-        # Recuperar documentos relevantes
-        try:
-            docs = chain.retriever.invoke(query)
-        except AttributeError:
-            print("⚠️ El retriever no está expuesto correctamente en la cadena.")
-            return
+        docs = retriever.invoke(query)
+        contexto = "\n\n".join([doc.page_content[:2000] for doc in docs[:5]])
 
-        print("\n🔎 Documentos recuperados por FAISS:\n")
-        try:
-            for i, doc in enumerate(list(docs)[:5]):
-                print(f"--- Documento {i+1} ---")
-                print(doc.page_content[:500])
-                print()
-        except Exception as e:
-            print(f"❌ Error mostrando documentos: {e}")
+        prompt_final = prompt_template.format(context=contexto, question=query)
 
-        # Obtener respuesta
-        try:
-            respuesta = chain.invoke(query)
-        except Exception:
-            respuesta = chain.run(query)
+        print("\n📄 Prompt enviado al LLM:\n")
+        print(prompt_final)
 
-        print(f"\n📘 Respuesta:\n{respuesta}\n")
+        respuesta = llm.invoke(prompt_final)
 
+        print("\n📘 Respuesta:\n")
+        print(respuesta.content)
+        print()
 
 if __name__ == "__main__":
     if not os.path.exists(f"{INDEX_FAISS}/index.faiss"):
@@ -77,5 +75,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     db = cargar_faiss()
-    agente = crear_agente(db)
-    hacer_pregunta(agente)
+    llm, retriever = crear_agente(db)
+    hacer_pregunta(llm, retriever)

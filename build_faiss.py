@@ -12,7 +12,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # === CONFIGURACIÓN ===
 CARPETA_MARKDOWN = "TSpec-LLM/3GPP-clean/Rel-15"  # Cambia esta ruta si es necesario
-MODELO_EMBEDDINGS = "sentence-transformers/all-MiniLM-L6-v2"
+MODELO_EMBEDDINGS = "all-mpnet-base-v2"
 INDEX_FAISS = "faiss_tspec"
 
 load_dotenv()
@@ -28,7 +28,7 @@ def cargar_documentos():
 # === PASO 2: Dividir documentos ===
 def dividir_en_chunks(documentos):
     print("✂️ Dividiendo en fragmentos...")
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
     chunks = splitter.split_documents(documentos)
     print(f"✅ Se generaron {len(chunks)} fragmentos.")
     return chunks
