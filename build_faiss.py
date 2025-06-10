@@ -5,6 +5,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 import os
+import torch
 from dotenv import load_dotenv
 from tqdm import tqdm
 
@@ -36,9 +37,12 @@ def dividir_en_chunks(documentos):
 # === PASO 3: Construir FAISS ===
 def construir_faiss(chunks):
     print("🧠 Generando embeddings en batches y construyendo FAISS...")
-
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    print(f"🖥️ Usando dispositivo: {device}")
+    
     embeddings = HuggingFaceEmbeddings(
         model_name=MODELO_EMBEDDINGS,
+        model_kwargs={"device":device},
         encode_kwargs={
             "batch_size": 64,
         }
