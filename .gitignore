@@ -21,3 +21,4 @@ TSpec-LLM/
 
 # Mac
 .DS_Store
+/progreso_faiss.txt
