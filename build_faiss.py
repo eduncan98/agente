@@ -4,6 +4,8 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain.schema import Document  # Agrega al inicio si no está
+
 import os
 import torch
 from dotenv import load_dotenv
@@ -13,7 +15,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # === CONFIGURACIÓN ===
 CARPETA_MARKDOWN = "TSpec-LLM/3GPP-clean/Rel-15"  # Cambia esta ruta si es necesario
-MODELO_EMBEDDINGS = "all-mpnet-base-v2"
+MODELO_EMBEDDINGS = "BAAI/bge-large-en-v1.5"
 INDEX_FAISS = "faiss_tspec"
 
 load_dotenv()
@@ -31,13 +33,14 @@ def dividir_en_chunks(documentos):
     print("✂️ Dividiendo en fragmentos...")
     splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
     chunks = splitter.split_documents(documentos)
+    chunks = [Document(page_content=f"passage: {chunk.page_content}", metadata=chunk.metadata) for chunk in chunks]    
     print(f"✅ Se generaron {len(chunks)} fragmentos.")
     return chunks
 
 # === PASO 3: Construir FAISS ===
 def construir_faiss(chunks):
     print("🧠 Generando embeddings en batches y construyendo FAISS...")
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
     print(f"🖥️ Usando dispositivo: {device}")
     
     embeddings = HuggingFaceEmbeddings(
@@ -45,6 +48,7 @@ def construir_faiss(chunks):
         model_kwargs={"device":device},
         encode_kwargs={
             "batch_size": 64,
+            "normalize_embeddings": True
         }
     )
 
