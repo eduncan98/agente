@@ -2,7 +2,7 @@
 
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.schema import Document
 from sentence_transformers import SentenceTransformer
@@ -42,13 +42,16 @@ def dividir_en_chunks(documentos):
 def construir_faiss(chunks):
     print("🧠 Generando embeddings en batches y construyendo FAISS...")
 
-    import torch
     device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
     print(f"🖥️ Usando dispositivo: {device}")
-    
-    embeddings = SentenceTransformerEmbeddings(model_name=MODELO_EMBEDDINGS)
 
-    batch_size = 64
+    modelo = SentenceTransformer(MODELO_EMBEDDINGS, device=device)
+    embeddings = SentenceTransformerEmbeddings(
+        model=modelo,
+        encode_kwargs={"batch_size": 128}
+    )
+
+    batch_size = 128
     progress = tqdm(total=len(chunks), desc="Indexando", ncols=80)
 
     first_batch = chunks[:batch_size]
