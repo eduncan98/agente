@@ -4,7 +4,8 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.schema import Document  # Agrega al inicio si no está
+from langchain.schema import Document
+from sentence_transformers import SentenceTransformer
 
 import os
 import torch
@@ -40,17 +41,13 @@ def dividir_en_chunks(documentos):
 # === PASO 3: Construir FAISS ===
 def construir_faiss(chunks):
     print("🧠 Generando embeddings en batches y construyendo FAISS...")
+
+    import torch
     device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
     print(f"🖥️ Usando dispositivo: {device}")
     
-    embeddings = HuggingFaceEmbeddings(
-        model_name=MODELO_EMBEDDINGS,
-        model_kwargs={"device":device},
-        encode_kwargs={
-            "batch_size": 64,
-            "normalize_embeddings": True
-        }
-    )
+    model = SentenceTransformer(MODELO_EMBEDDINGS, device=device)
+    embeddings = HuggingFaceEmbeddings(model=model, encode_kwargs={"batch_size": 128})
 
     batch_size = 64
     progress = tqdm(total=len(chunks), desc="Indexando", ncols=80)
