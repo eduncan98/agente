@@ -46,8 +46,7 @@ def construir_faiss(chunks):
     device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
     print(f"🖥️ Usando dispositivo: {device}")
     
-    model = SentenceTransformer(MODELO_EMBEDDINGS, device=device)
-    embeddings = SentenceTransformerEmbeddings(model=model)
+    embeddings = SentenceTransformerEmbeddings(model_name=MODELO_EMBEDDINGS)
 
     batch_size = 64
     progress = tqdm(total=len(chunks), desc="Indexando", ncols=80)
