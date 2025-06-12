@@ -2,7 +2,7 @@
 
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.schema import Document
 from sentence_transformers import SentenceTransformer
@@ -47,7 +47,7 @@ def construir_faiss(chunks):
     print(f"🖥️ Usando dispositivo: {device}")
     
     model = SentenceTransformer(MODELO_EMBEDDINGS, device=device)
-    embeddings = HuggingFaceEmbeddings(model=model, encode_kwargs={"batch_size": 128})
+    embeddings = SentenceTransformerEmbeddings(model=model)
 
     batch_size = 64
     progress = tqdm(total=len(chunks), desc="Indexando", ncols=80)
