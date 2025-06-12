@@ -1,0 +1,10 @@
+langchain
+langchain-community
+langchain-openai
+langchain-huggingface
+sentence-transformers
+torch
+faiss-cpu
+faiss-gpu
+tqdm
+python-dotenv
