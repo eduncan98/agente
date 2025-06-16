@@ -64,7 +64,7 @@ def construir_faiss(chunks, fresh=False):
     print("🧠 Generando embeddings y construyendo FAISS (resumible)...")
     device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
     print(f"🖥️ Usando dispositivo: {device}")
-    model = SentenceTransformer(MODELO_EMBEDDINGS, device=device)
+    #model = SentenceTransformer(MODELO_EMBEDDINGS, device=device)
     embeddings = HuggingFaceEmbeddings(
         model_name=MODELO_EMBEDDINGS,
         model_kwargs={"device": device},

@@ -120,6 +120,24 @@ Answer:"""
         print(respuesta.content)
         print()
 
+def ver_vector_de_chunk(db):
+    keys = list(db.docstore._dict.keys())
+    print(f"\n🧩 Hay {len(keys)} chunks en el índice FAISS.")
+    try:
+        index = int(input("🔢 Ingresa el índice del chunk que deseas ver: ").strip())
+        if index < 0 or index >= len(keys):
+            print("❌ Índice fuera de rango.")
+            return
+        key = keys[index]
+        doc = db.docstore._dict[key]
+        vector = db.index.reconstruct(index)
+        print(f"\n📄 Contenido del chunk [{index}]:\n{doc.page_content[:500]}...\n")
+        print(f"🔢 Vector (primeros 10 valores): {vector[:10]}")
+        print(f"🔹 Dimensión del vector: {len(vector)}\n")
+    except Exception as e:
+        print(f"⚠️ Error: {e}")
+
+
 if __name__ == "__main__":
     if not os.path.exists(f"{INDEX_FAISS}/index.faiss"):
         print("❌ ERROR: No se encontró el índice FAISS. Ejecuta primero build_faiss.py.")
@@ -127,4 +145,20 @@ if __name__ == "__main__":
 
     db = cargar_faiss()
     llm, retriever, reranker = crear_agente(db)
-    hacer_pregunta(llm, retriever, reranker)
+
+    while True:
+        print("\n📚 MENÚ:")
+        print("1. Hacer pregunta técnica")
+        print("2. Ver un chunk y su vector")
+        print("3. Salir")
+        opcion = input("🧠> ").strip()
+
+        if opcion == "1":
+            hacer_pregunta(llm, retriever, reranker)
+        elif opcion == "2":
+            ver_vector_de_chunk(db)
+        elif opcion == "3":
+            print("👋 Saliendo.")
+            break
+        else:
+            print("❌ Opción inválida.")
