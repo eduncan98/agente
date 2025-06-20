@@ -51,24 +51,25 @@ def cargar_documentos_para_bm25():
     return chunks
 
 # === Función para crear retriever híbrido ===
-def crear_retriever_hibrido(faiss_db, documentos_bm25):
+def crear_retriever(faiss_db, documentos_bm25):
     print("🔀 Combinando FAISS + BM25 retrievers...")
     faiss_retriever = faiss_db.as_retriever(search_kwargs={"k": 150})
     bm25_retriever = BM25Retriever.from_documents(documentos_bm25)
     bm25_retriever.k = 150
-    return EnsembleRetriever(
+    retrieverhib=EnsembleRetriever(
         retrievers=[faiss_retriever, bm25_retriever],
         weights=[0.5, 0.5]
     )
+    return retrieverhib, faiss_retriever, bm25_retriever
 
 # === Crear agente híbrido ===
 def crear_agente(faiss_db):
     print("🤖 Inicializando agente híbrido con reranker...")
     documentos_bm25 = cargar_documentos_para_bm25()
-    retriever_hibrido = crear_retriever_hibrido(faiss_db, documentos_bm25)
+    retriever_hibrido, faiss_retriever, bm25_retriever = crear_retriever(faiss_db, documentos_bm25)
     reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
     llm = ChatOpenAI(model_name="gpt-4", temperature=0)
-    return llm, retriever_hibrido, reranker
+    return llm, retriever_hibrido, faiss_retriever, bm25_retriever, reranker
 
 
 def hacer_pregunta(llm, retriever, reranker):
@@ -144,20 +145,26 @@ if __name__ == "__main__":
         sys.exit(1)
 
     db = cargar_faiss()
-    llm, retriever, reranker = crear_agente(db)
+    llm, retriever, retriever_faiss, retriever_bm25, reranker = crear_agente(db)
 
     while True:
         print("\n📚 MENÚ:")
-        print("1. Hacer pregunta técnica")
-        print("2. Ver un chunk y su vector")
-        print("3. Salir")
+        print("1. Hacer pregunta técnica (con retriever hibrido)")
+        print("2. Hacer pregunta técnica (usando el archivo FAISS)")
+        print("3. Hacer pregunta técnica (usando BM25)")
+        print("4. Ver un chunk y su vector")
+        print("5. Salir")
         opcion = input("🧠> ").strip()
 
         if opcion == "1":
             hacer_pregunta(llm, retriever, reranker)
         elif opcion == "2":
-            ver_vector_de_chunk(db)
+            hacer_pregunta(llm, retriever_faiss, reranker)
         elif opcion == "3":
+            hacer_pregunta(llm, retriever_bm25, reranker)
+        elif opcion == "4":
+            ver_vector_de_chunk(db)
+        elif opcion == "5":
             print("👋 Saliendo.")
             break
         else:
